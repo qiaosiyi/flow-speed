@@ -1,34 +1,61 @@
 `timescale 1ns / 1ps
 
-module queue(
-    input            	s_axis_tvalid,
-    input [7:0]       s_axis_tdata,
-	input               s_axis_tlast,
-	input [7:0]        s_axis_tuser_mty,
-	output reg          s_axis_tready,//()
+module queue#(
+    parameter C_MAX_DEPTH_BITS = 6,
+	parameter C_DATA_WIDTH = 8,
+	parameter C_MTY_WIDTH = 8
+)(
+    input            				s_axis_tvalid,
+    input [C_DATA_WIDTH - 1:0]       s_axis_tdata,
+	input               			s_axis_tlast,
+	input [C_MTY_WIDTH - 1:0]        s_axis_tuser_mty,
+	output reg          				s_axis_tready,//()
 	
-	input               drop_incmpt_pkt,
+	input               			drop_incmpt_pkt,
 	
-	output reg          m_axis_tvalid,
-	output reg [7:0]  m_axis_tdata,
-	output reg          m_axis_tlast,
-	output reg [7:0]   m_axis_tuser_mty,
-	input               m_axis_tready,
+	output reg          			m_axis_tvalid,
+	output reg [C_DATA_WIDTH - 1:0]  m_axis_tdata,
+	output reg          			m_axis_tlast,
+	output reg [C_MTY_WIDTH - 1:0]   m_axis_tuser_mty,
+	input               				m_axis_tready,
     
     input areset,
     input aclk
     );
+    localparam L_MAX_DEPTH = 2 ** C_MAX_DEPTH_BITS;
 	
-	reg [12:0] wr_p;
-	reg [12:0] rd_p;
+	
+	reg [C_MAX_DEPTH_BITS - 1:0] wr_p;
+	reg [C_MAX_DEPTH_BITS - 1:0] rd_p;
 	reg wrupdate;
-	reg last_wr;
+	reg [C_MAX_DEPTH_BITS - 1:0] last_wr;
 	reg wea;
-	reg [5:0] addra;
-	reg [19:0] dina;
-	reg [5:0] addrb;
-	wire [19:0] doutb;
+	reg [C_MAX_DEPTH_BITS - 1:0] addra;
+	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 + 1 - 1:0] dina;
+	reg [C_MAX_DEPTH_BITS - 1:0] addrb;
+	wire [C_DATA_WIDTH + C_MTY_WIDTH + 1 + 1 - 1:0] doutb;
+	reg [C_MAX_DEPTH_BITS - 1:0] depth;
 	
+	wire full;
+	reg full_1;
+	
+	wire 							m_axis_tvalid_out;
+	wire [C_DATA_WIDTH - 1:0] 		m_axis_tdata_out;
+	wire 							m_axis_tlast_out;
+	wire [C_MTY_WIDTH - 1:0]   		m_axis_tuser_mty_out;
+	assign {m_axis_tvalid_out, m_axis_tdata_out, m_axis_tlast_out, m_axis_tuser_mty_out} = doutb;
+	
+	wire  							s_axis_tvalid_in;
+	wire [C_DATA_WIDTH - 1:0] 		s_axis_tdata_in;
+	wire 							s_axis_tlast_in;
+	wire [C_MTY_WIDTH - 1:0]   		s_axis_tuser_mty_in;
+	assign {s_axis_tvalid_in, s_axis_tdata_in,s_axis_tlast_in, s_axis_tuser_mty_in} = dina;
+	reg bram_valid;
+	reg [C_MAX_DEPTH_BITS - 1:0] pkt_cnt;
+	
+	reg [C_MAX_DEPTH_BITS - 1:0] rd_p_last;
+	reg read1;
+	reg read2;
 	
 	//blk_290_8192 mm_inst(//290 = 1 + 256 + 1 + 32// = s_axis_tvalid + s_axis_tdata + s_axis_tlast + s_axis_tuser_mty;
 	//	.clka(),
@@ -39,7 +66,7 @@ module queue(
 	//	.addrb(),
 	//	.doutb()
 	//);
-	blk_20_64 mm_inst(//20 = 1 + 8 + 1 + 8// = s_axis_tvalid + s_axis_tdata + s_axis_tlast + s_axis_tuser_mty;
+	blk_20_64 mm_inst(//18 = 1 + 8 + 1 + 8// = s_axis_tvalid + s_axis_tdata + s_axis_tlast + s_axis_tuser_mty;
 		.clka(aclk),
 		.clkb(aclk),
 		
@@ -51,7 +78,7 @@ module queue(
 		.doutb(doutb)
 	);	
 	
-	always @(posedge aclk) begin
+	always @(posedge aclk) begin//write
 		if(areset)begin
 			wrupdate <= 1;
 			wea <= 0;
@@ -59,25 +86,100 @@ module queue(
 			dina <= 0;
 			wr_p <= 0;
 			last_wr <= 0;
-			
+			full_1 <= 0;
+			rd_p_last <= 0;
 		end else begin
-			if(s_axis_tvalid)begin
+			if(s_axis_tvalid && !full && !full_1)begin
 				wea <= 1;
 				addra <= wr_p;
 				dina <= {s_axis_tvalid, s_axis_tdata, s_axis_tlast, s_axis_tuser_mty};
 				wr_p <= wr_p + 1;
+			end else begin
+				wea <= 0;
 			end
-			if(wrupdate)begin
+			if(wrupdate && !full)begin
 				last_wr <= wr_p;
 				wrupdate <= 0;
 			end
-			if(s_axis_tvalid && s_axis_tlast)begin
+			if(s_axis_tvalid && s_axis_tlast && !full)begin
 				wrupdate <= 1;
 			end
+			if(full || full_1)begin
+			    wr_p <= last_wr;
+			    full_1 <= 1;
+			end
+			if(drop_incmpt_pkt)begin
+			    full_1 <= 0;
+			    //wr_p <= last_wr;
+			end
+			rd_p_last <= wr_p;
 		end
 	end
 	
+	assign pkt_in_cnt = s_axis_tvalid && !full && !full_1 && s_axis_tlast;
+	assign pkt_out_cnt = m_axis_tvalid && m_axis_tlast && m_axis_tready && bram_valid;
 	
+	always @(posedge aclk)begin
+		if(areset)begin
+			pkt_cnt <= 0;
+		end else begin
+			if(pkt_in_cnt && !pkt_out_cnt)begin
+				pkt_cnt <= pkt_cnt + 1;
+			end
+			if(!pkt_in_cnt && pkt_out_cnt)begin
+				pkt_cnt <= pkt_cnt - 1;
+			end
+			
+		end
+	end
+	
+	always @(posedge aclk)begin//read
+		if(areset)begin
+			rd_p <= 0;
+			
+			bram_valid <= 0;
+		end else begin
+			if(pkt_cnt > 0)begin
+				read1 <= 1;
+				addrb <= rd_p;
+				rd_p <= rd_p + 1;
+			end else begin
+				read1 <= 0;
+			end
+			if(read1)begin
+				read2 <= 1;
+				addrb <= rd_p;
+				rd_p <= rd_p + 1;
+			end else begin
+				read2 <= 0;
+			end
+			if(read2)begin
+				bram_valid <= 1;
+				{m_axis_tvalid, m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= doutb;
+			end else begin
+				bram_valid <= 0;
+			end
+			
+		end
+	end
+	always @(posedge aclk) begin
+	    if(areset)begin
+	       depth <= 0;
+	       s_axis_tready <= 1;
+	    end else begin
+	        if(s_axis_tvalid) begin
+		        //depth <= depth + 1;
+				depth <= wr_p - rd_p;
+			end   
+	        if(full)begin
+	            s_axis_tready <= 0;
+	        end else begin
+	            s_axis_tready <= 1;
+	        end
+	    end
+	end
+	
+	assign full = depth == (L_MAX_DEPTH - 4);
 	
 	
 	
