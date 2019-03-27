@@ -56,6 +56,7 @@ module queue#(
 	reg [C_MAX_DEPTH_BITS - 1:0] rd_p_last;
 	reg read1;
 	reg read2;
+	reg read3;
 	
 	//blk_290_8192 mm_inst(//290 = 1 + 256 + 1 + 32// = s_axis_tvalid + s_axis_tdata + s_axis_tlast + s_axis_tuser_mty;
 	//	.clka(),
@@ -138,13 +139,15 @@ module queue#(
 			rd_p <= 0;
 			read1 <= 0;
 			read2 <= 0;
+			read3 <= 0;
 			bram_valid <= 0;
 			m_axis_tvalid <= 0;
 			m_axis_tdata <= 0;
 			m_axis_tlast <= 0;
 			m_axis_tuser_mty <= 0;
+			//addrb <= 20;
 		end else begin
-			if(pkt_cnt > 0 && depth>0)begin
+			if(pkt_cnt > 0 && depth>1)begin
 				read1 <= 1;
 				addrb <= rd_p;
 				rd_p <= rd_p + 1;
@@ -154,18 +157,18 @@ module queue#(
 			if(read1)begin
 				read2 <= 1;
 				addrb <= rd_p;
-				rd_p <= rd_p + 1;
+				//rd_p <= rd_p + 1;
 			end else begin
 				read2 <= 0;
 			end
 			if(read2)begin
 				read3 <= 1;
 				addrb <= rd_p;
-				rd_p <= rd_p + 1;
+				//rd_p <= rd_p + 1;
 			end else begin
 				read3 <= 0;
 			end
-			if(read3)begin
+			if(read3 )begin
 				bram_valid <= 1;
 				{m_axis_tvalid, m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= doutb;
 			end else begin
