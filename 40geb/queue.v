@@ -136,10 +136,15 @@ module queue#(
 	always @(posedge aclk)begin//read
 		if(areset)begin
 			rd_p <= 0;
-			
+			read1 <= 0;
+			read2 <= 0;
 			bram_valid <= 0;
+			m_axis_tvalid <= 0;
+			m_axis_tdata <= 0;
+			m_axis_tlast <= 0;
+			m_axis_tuser_mty <= 0;
 		end else begin
-			if(pkt_cnt > 0)begin
+			if(pkt_cnt > 0 && depth>0)begin
 				read1 <= 1;
 				addrb <= rd_p;
 				rd_p <= rd_p + 1;
@@ -154,6 +159,13 @@ module queue#(
 				read2 <= 0;
 			end
 			if(read2)begin
+				read3 <= 1;
+				addrb <= rd_p;
+				rd_p <= rd_p + 1;
+			end else begin
+				read3 <= 0;
+			end
+			if(read3)begin
 				bram_valid <= 1;
 				{m_axis_tvalid, m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= doutb;
 			end else begin
@@ -167,10 +179,10 @@ module queue#(
 	       depth <= 0;
 	       s_axis_tready <= 1;
 	    end else begin
-	        if(s_axis_tvalid) begin
+	        //if(s_axis_tvalid) begin
 		        //depth <= depth + 1;
 				depth <= wr_p - rd_p;
-			end   
+			//end   
 	        if(full)begin
 	            s_axis_tready <= 0;
 	        end else begin
