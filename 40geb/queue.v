@@ -29,34 +29,41 @@ module queue#(
 	reg [C_MAX_DEPTH_BITS - 1:0] rd_p;
 	reg wrupdate;
 	reg [C_MAX_DEPTH_BITS - 1:0] last_wr;
+	reg [C_MAX_DEPTH_BITS - 1:0] last_rd;
 	reg wea;
 	reg [C_MAX_DEPTH_BITS - 1:0] addra;
-	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 + 1 - 1:0] dina;
+	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0] dina;
 	reg [C_MAX_DEPTH_BITS - 1:0] addrb;
-	wire [C_DATA_WIDTH + C_MTY_WIDTH + 1 + 1 - 1:0] doutb;
+	wire [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0] doutb;
 	reg [C_MAX_DEPTH_BITS - 1:0] depth;
 	
 	wire full;
 	reg full_1;
 	
-	wire 							m_axis_tvalid_out;
+	//wire 							m_axis_tvalid_out;
 	wire [C_DATA_WIDTH - 1:0] 		m_axis_tdata_out;
 	wire 							m_axis_tlast_out;
 	wire [C_MTY_WIDTH - 1:0]   		m_axis_tuser_mty_out;
-	assign {m_axis_tvalid_out, m_axis_tdata_out, m_axis_tlast_out, m_axis_tuser_mty_out} = doutb;
+	assign {m_axis_tdata_out, m_axis_tlast_out, m_axis_tuser_mty_out} = doutb;
 	
-	wire  							s_axis_tvalid_in;
+	//wire  							s_axis_tvalid_in;
 	wire [C_DATA_WIDTH - 1:0] 		s_axis_tdata_in;
 	wire 							s_axis_tlast_in;
 	wire [C_MTY_WIDTH - 1:0]   		s_axis_tuser_mty_in;
-	assign {s_axis_tvalid_in, s_axis_tdata_in,s_axis_tlast_in, s_axis_tuser_mty_in} = dina;
+	assign {s_axis_tdata_in,s_axis_tlast_in, s_axis_tuser_mty_in} = dina;
 	reg bram_valid;
 	reg [C_MAX_DEPTH_BITS - 1:0] pkt_cnt;
 	
-	reg [C_MAX_DEPTH_BITS - 1:0] rd_p_last;
+	reg [C_MAX_DEPTH_BITS - 1:0] rd_p_last;//上一个读的地址
+	//reg [C_MAX_DEPTH_BITS - 1:0] rd_p_before;
 	reg read1;
 	reg read2;
 	reg read3;
+	
+	reg [3:0] 										c_cnt;
+	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0]  tmp_d1;
+	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0]  tmp_d2;
+	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0]  tmp_d3;
 	
 	//blk_290_8192 mm_inst(//290 = 1 + 256 + 1 + 32// = s_axis_tvalid + s_axis_tdata + s_axis_tlast + s_axis_tuser_mty;
 	//	.clka(),
@@ -88,7 +95,7 @@ module queue#(
 			wr_p <= 0;
 			last_wr <= 0;
 			full_1 <= 0;
-			rd_p_last <= 0;
+			//last_rd <= 0
 		end else begin
 			if(s_axis_tvalid && !full && !full_1)begin
 				wea <= 1;
@@ -146,11 +153,34 @@ module queue#(
 			m_axis_tlast <= 0;
 			m_axis_tuser_mty <= 0;
 			//addrb <= 20;
+			rd_p_last <= 0;
+			c_cnt <= 0;
+			tmp_d1 <= 0;
+			tmp_d2 <= 0;
+			tmp_d3 <= 0;
 		end else begin
+			rd_p_last <= addrb;
+			if(pkt_cnt > 0 && !m_axis_tready )begin//读取数据不变，需要开始缓存。
+				if(c_cnt == 0)begin
+					c_cnt <= 1;
+					tmp_d1 <= doutb;
+				end else if(c_cnt == 1)begin
+					c_cnt <= 2;
+					tmp_d2 <= doutb;
+				end else if(c_cnt == 2) begin
+					c_cnt <= 3;
+					tmp_d3 <= doutb;
+				end
+			end else begin
+			end
+			//if(pkt_cnt > 0 && depth>1)begin
+			
 			if(pkt_cnt > 0 && depth>1)begin
 				read1 <= 1;
 				addrb <= rd_p;
-				rd_p <= rd_p + 1;
+				if(m_axis_tready)begin
+					rd_p <= rd_p + 1;
+				end
 			end else begin
 				read1 <= 0;
 			end
@@ -168,11 +198,33 @@ module queue#(
 			end else begin
 				read3 <= 0;
 			end
-			if(read3 )begin
+			if(read3 && !(pkt_cnt > 0 && !m_axis_tready)) begin//当发生变化，也要及时输出，所以不光得read3时候输出，在检测ready拉高后就要输出了。
+				if(c_cnt == 3)begin
+					c_cnt <= 2;
+					//bram_valid <= 1;
+					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= tmp_d1;
+				end else if(c_cnt == 2)begin
+					c_cnt <= 1;
+					//bram_valid <= 1;
+					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= tmp_d2;
+				end else if(c_cnt == 1) begin
+					c_cnt <= 0;
+					//bram_valid <= 1;
+					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= tmp_d3;
+				end else begin
+					//bram_valid <= 1;
+					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= doutb;
+				end
 				bram_valid <= 1;
-				{m_axis_tvalid, m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= doutb;
+				m_axis_tvalid <= 1;
+			end else if(pkt_cnt > 0 && !m_axis_tready)begin
+				//bram_valid <= 1;
+				//m_axis_tvalid <= 1;
+				bram_valid <= 0;
+				m_axis_tvalid <= 0;
 			end else begin
 				bram_valid <= 0;
+				m_axis_tvalid <= 0;
 			end
 			
 		end
