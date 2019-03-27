@@ -27,6 +27,7 @@ initial begin
 
 	#23 reset = 0;
 	
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h01;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h02;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h03;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -38,8 +39,7 @@ initial begin
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h09;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0a;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0b;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0d;s_axis_tlast = 1;s_axis_tuser_mty = 'h01;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 1;s_axis_tuser_mty = 'h01;m_axis_tready = 0;
 	
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -49,7 +49,7 @@ initial begin
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
+	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;m_axis_tready = 1;
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -65,6 +65,7 @@ initial begin
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	
 	
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h01;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h02;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h03;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -76,9 +77,9 @@ initial begin
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h09;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0a;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0b;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0d;s_axis_tlast = 1;s_axis_tuser_mty = 'h02;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 1;s_axis_tuser_mty = 'h02;
 	
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h01;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h02;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h03;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -90,9 +91,9 @@ initial begin
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h09;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0a;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0b;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0d;s_axis_tlast = 1;s_axis_tuser_mty = 'h03;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 1;s_axis_tuser_mty = 'h03;
 
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h01;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h02;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h03;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -104,9 +105,9 @@ initial begin
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h09;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0a;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0b;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0d;s_axis_tlast = 1;s_axis_tuser_mty = 'h04;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 1;s_axis_tuser_mty = 'h04;
 	
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h01;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h02;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h03;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -118,10 +119,10 @@ initial begin
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h09;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0a;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0b;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0d;s_axis_tlast = 1;s_axis_tuser_mty = 'h05;drop_incmpt_pkt = 1;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 1;s_axis_tuser_mty = 'h05;drop_incmpt_pkt = 1;
 	
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h01;s_axis_tlast = 0;s_axis_tuser_mty = 0;drop_incmpt_pkt = 0;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;drop_incmpt_pkt = 0;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h01;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h02;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h03;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h04;s_axis_tlast = 0;s_axis_tuser_mty = 0;
@@ -132,8 +133,7 @@ initial begin
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h09;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0a;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0b;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 0;s_axis_tuser_mty = 0;
-	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0d;s_axis_tlast = 1;s_axis_tuser_mty = 'h06;
+	#10 s_axis_tvalid = 1;s_axis_tdata = 'h0c;s_axis_tlast = 1;s_axis_tuser_mty = 'h06;
 	
 	#10 s_axis_tvalid = 0;s_axis_tdata = 'h00;s_axis_tlast = 0;s_axis_tuser_mty = 0;
 	
