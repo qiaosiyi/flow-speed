@@ -65,6 +65,8 @@ module queue#(
 	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0]  tmp_d2;
 	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0]  tmp_d3;
 	
+	reg [3:0]										read_delay_3clc;
+	
 	//blk_290_8192 mm_inst(//290 = 1 + 256 + 1 + 32// = s_axis_tvalid + s_axis_tdata + s_axis_tlast + s_axis_tuser_mty;
 	//	.clka(),
 	//	.wea(),
@@ -120,7 +122,7 @@ module queue#(
 			    full_1 <= 0;
 			    //wr_p <= last_wr;
 			end
-			rd_p_last <= wr_p;
+			//rd_p_last <= wr_p;
 		end
 	end
 	
@@ -141,6 +143,9 @@ module queue#(
 		end
 	end
 	
+	
+	
+	
 	always @(posedge aclk)begin//read
 		if(areset)begin
 			rd_p <= 0;
@@ -152,15 +157,28 @@ module queue#(
 			m_axis_tdata <= 0;
 			m_axis_tlast <= 0;
 			m_axis_tuser_mty <= 0;
-			//addrb <= 20;
+			//addrb <= 0;//
 			rd_p_last <= 0;
 			c_cnt <= 0;
 			tmp_d1 <= 0;
 			tmp_d2 <= 0;
 			tmp_d3 <= 0;
+			read_delay_3clc <= 0;
 		end else begin
-			rd_p_last <= addrb;
-			if(pkt_cnt > 0 && !m_axis_tready )begin//读取数据不变，需要开始缓存。
+			if(pkt_cnt > 0)begin
+				if(read_delay_3clc < 6)begin
+					read_delay_3clc <= read_delay_3clc + 1;
+				end else begin
+				
+				end
+				
+			end else begin
+				read_delay_3clc <= 0;
+			end
+			
+			rd_p_last <= addrb;//rd_p
+			
+			if(pkt_cnt > 0 && !m_axis_tready )begin//读取数据不变，需要开始缓存。&& (read_delay_3clc >= 5)
 				if(c_cnt == 0)begin
 					c_cnt <= 1;
 					tmp_d1 <= doutb;
@@ -175,7 +193,7 @@ module queue#(
 			end
 			//if(pkt_cnt > 0 && depth>1)begin
 			
-			if(pkt_cnt > 0 && depth>1)begin
+			if(pkt_cnt > 0 && depth>1 )begin//&& (read_delay_3clc >= 5)
 				read1 <= 1;
 				addrb <= rd_p;
 				if(m_axis_tready)begin
