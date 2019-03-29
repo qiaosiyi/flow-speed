@@ -27,6 +27,8 @@ module queue#(
 	
 	reg [C_MAX_DEPTH_BITS - 1:0] wr_p;
 	reg [C_MAX_DEPTH_BITS - 1:0] rd_p;
+	reg [C_MAX_DEPTH_BITS - 1:0] rd_stop;
+	reg [C_MAX_DEPTH_BITS - 1:0] rd_cnt;
 	reg wrupdate;
 	reg [C_MAX_DEPTH_BITS - 1:0] last_wr;
 	reg [C_MAX_DEPTH_BITS - 1:0] last_rd;
@@ -65,7 +67,8 @@ module queue#(
 	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0]  tmp_d2;
 	reg [C_DATA_WIDTH + C_MTY_WIDTH + 1 - 1:0]  tmp_d3;
 	
-	reg [3:0]										read_delay_3clc;
+	reg [3:0]										read_delay_3clc,start;
+	reg flag;
 	
 	//blk_290_8192 mm_inst(//290 = 1 + 256 + 1 + 32// = s_axis_tvalid + s_axis_tdata + s_axis_tlast + s_axis_tuser_mty;
 	//	.clka(),
@@ -164,6 +167,10 @@ module queue#(
 			tmp_d2 <= 0;
 			tmp_d3 <= 0;
 			read_delay_3clc <= 0;
+			rd_stop <= 0;
+			rd_cnt <= 0;
+			flag <= 0;
+			start <= 3;
 		end else begin
 			if(pkt_cnt > 0)begin
 				if(read_delay_3clc < 6)begin
@@ -178,26 +185,46 @@ module queue#(
 			
 			rd_p_last <= addrb;//rd_p
 			
-			if(pkt_cnt > 0 && !m_axis_tready )begin//读取数据不变，需要开始缓存。&& (read_delay_3clc >= 5)
-				if(c_cnt == 0)begin
-					c_cnt <= 1;
-					tmp_d1 <= doutb;
-				end else if(c_cnt == 1)begin
-					c_cnt <= 2;
-					tmp_d2 <= doutb;
-				end else if(c_cnt == 2) begin
-					c_cnt <= 3;
-					tmp_d3 <= doutb;
-				end
+			if(!m_axis_tready)begin
+				start <= 0;
 			end else begin
+				if(start < 3)begin
+					start <= start + 1;
+				end
 			end
-			//if(pkt_cnt > 0 && depth>1)begin
+			
+			//if(pkt_cnt > 0 && !m_axis_tready )begin//读取数据不变，需要开始缓存。&& (read_delay_3clc >= 5)
+			//	if(c_cnt == 0)begin
+			//		c_cnt <= 1;
+			//		tmp_d1 <= doutb;
+			//	end else if(c_cnt == 1)begin
+			//		c_cnt <= 2;
+			//		tmp_d2 <= doutb;
+			//	end else if(c_cnt == 2) begin
+			//		c_cnt <= 3;
+			//		tmp_d3 <= doutb;
+			//	end
+			//end else begin
+			//end
 			
 			if(pkt_cnt > 0 && depth>1 )begin//&& (read_delay_3clc >= 5)
 				read1 <= 1;
+				rd_cnt <= rd_cnt + 1;
 				addrb <= rd_p;
 				if(m_axis_tready)begin
 					rd_p <= rd_p + 1;
+					flag <= 1;
+				end else begin
+					rd_cnt <= 0;
+					
+					if(flag && (rd_p > 2))begin
+						rd_p <= rd_p-3;
+						flag <= 0;
+					end else if(flag)begin
+						rd_p <= 0;
+						flag <= 0;
+					end
+					
 				end
 			end else begin
 				read1 <= 0;
@@ -216,30 +243,26 @@ module queue#(
 			end else begin
 				read3 <= 0;
 			end
-			if(read3 && !(pkt_cnt > 0 && !m_axis_tready)) begin//当发生变化，也要及时输出，所以不光得read3时候输出，在检测ready拉高后就要输出了。
-				if(c_cnt == 3)begin
+			//if(read3 && !(pkt_cnt > 0 && !m_axis_tready)) begin//当发生变化，也要及时输出，所以不光得read3时候输出，在检测ready拉高后就要输出了。
+			if(read3 && (start == 3)) begin
+				/*if(c_cnt == 3)begin
 					c_cnt <= 2;
-					//bram_valid <= 1;
 					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= tmp_d1;
 				end else if(c_cnt == 2)begin
 					c_cnt <= 1;
-					//bram_valid <= 1;
 					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= tmp_d2;
 				end else if(c_cnt == 1) begin
 					c_cnt <= 0;
-					//bram_valid <= 1;
 					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= tmp_d3;
 				end else begin
-					//bram_valid <= 1;
 					{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= doutb;
-				end
+				end */
+				{m_axis_tdata, m_axis_tlast, m_axis_tuser_mty} <= doutb;
 				bram_valid <= 1;
 				m_axis_tvalid <= 1;
-			end else if(pkt_cnt > 0 && !m_axis_tready)begin
-				//bram_valid <= 1;
-				//m_axis_tvalid <= 1;
-				bram_valid <= 0;
-				m_axis_tvalid <= 0;
+			//end else if(pkt_cnt > 0 && !m_axis_tready)begin
+			//	bram_valid <= 0;
+			//	m_axis_tvalid <= 0;
 			end else begin
 				bram_valid <= 0;
 				m_axis_tvalid <= 0;
@@ -271,3 +294,5 @@ module queue#(
 	
 	
 	endmodule
+	
+
